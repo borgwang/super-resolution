@@ -4,9 +4,8 @@
 
 - EDSR
 
-
 #### TODOs
 
-- arguments parsing
 - model saving and restoring
 - implement metric
+- decay learning rate

@@ -15,25 +15,25 @@ from utils import visualize_samples
 
 def main(args):
     # data preparation
-    scale = cfg["model"]["scale"]
+    scale = cfg["scale"]
     transform = transforms.Compose([
         RandomCrop(256, scale=scale), 
         RandomFlip(vp=0, hp=0.5), 
         RandomRotate(), 
         ToTensor()])
 
-    train_set = DIV2K(cfg["data"]["train"], transform=transform)
-    # valid_set = DIV2K(cfg["data"]["valid"], transform=transform)
+    train_set = DIV2K(cfg["train_dir"], transform=transform)
+    # valid_set = DIV2K(cfg["valid_dir"], transform=transform)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    train_loader = DataLoader(train_set, batch_size=cfg["train"]["batch_size"], 
+    train_loader = DataLoader(train_set, batch_size=cfg["batch_size"], 
                               shuffle=True, num_workers=8)
     model = EDSR().to(device)
     criterion = torch.nn.L1Loss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=cfg["train"]["init_lr"])
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg["init_lr"])
 
     model.train()
-    for epoch in range(cfg["train"]["n_epoch"]):
+    for epoch in range(cfg["n_epoch"]):
         for i, batch in enumerate(train_loader):
             lr, hr = batch[0].to(device), batch[1].to(device)
             optimizer.zero_grad()

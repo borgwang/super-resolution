@@ -48,9 +48,9 @@ class EDSR(nn.Module):
     def __init__(self):
         super().__init__()
         n_colors = 3  # RGB
-        n_feats = cfg["model"]["n_feats"]
-        n_residual_blocks = cfg["model"]["n_residual_blocks"]
-        scale = cfg["model"]["scale"]
+        n_feats = cfg["n_feats"]
+        n_residual_blocks = cfg["n_residual_blocks"]
+        scale = cfg["scale"]
 
         layers = []
         head = [conv(n_colors, n_feats)]

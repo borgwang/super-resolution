@@ -37,10 +37,8 @@ class DIV2K(Dataset):
         def read(path):
             return np.array(Image.open(path)).astype("float")
 
-        if isinstance(paths, str):
-            return read(paths)
-        else:
-            return np.array([read(p) for p in paths])
+        return read(paths) if isinstance(paths, str) else \
+                np.array([read(p) for p in paths])
 
 
 class RandomCrop:

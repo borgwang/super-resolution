@@ -1,6 +1,8 @@
 import os
 import matplotlib.pyplot as plt
 
+from config import cfg
+
 
 def visualize_samples(samples, name, show=True, save=False):
     cols = len(samples)
@@ -13,11 +15,12 @@ def visualize_samples(samples, name, show=True, save=False):
             plt.subplot(rows, cols, j * cols + i + 1)
             plt.title(k)
             plt.imshow(sample)
+            plt.xticks([])
+            plt.yticks([])
     if save:
-        diretory = "./samples"
+        diretory = cfg["sample_dir"]
         if not os.path.exists(diretory):
             os.makedirs(diretory)
         plt.savefig(os.path.join(diretory, name))
     if show:
         plt.show()
-
