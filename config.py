@@ -6,7 +6,7 @@ cfg = {
         },
     "valid_dir": {
         "hr": "./data/DIV2K_valid_HR",
-        "lr": "./data/DIV2K_valid_LR_x8"
+        "lr": "./data/DIV2K_valid_LR_mild"
         },
     # training
     "n_epoch": 300,
