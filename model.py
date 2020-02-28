@@ -9,9 +9,9 @@ from config import cfg
 RGB_MEAN = np.array([0.4488, 0.4371, 0.4040])
 
 
-def conv(in_c, out_c, kernel_size=3, bias=True):
-    return nn.Conv2d(in_c, out_c, kernel_size, padding=(kernel_size // 2), 
-                     bias=bias)
+def conv(in_channel, out_channel, kernel_size=3, bias=True):
+    return nn.Conv2d(in_channel, out_channel, kernel_size, 
+                     padding=(kernel_size // 2), bias=bias)
 
 
 class BasicBlock(nn.Module):
@@ -49,13 +49,11 @@ class EDSR(nn.Module):
         super().__init__()
         n_colors = 3  # RGB
         n_feats = cfg["n_feats"]
-        n_residual_blocks = cfg["n_residual_blocks"]
-        scale = cfg["scale"]
 
         layers = []
         head = [conv(n_colors, n_feats)]
-        body = [BasicBlock(n_feats) for _ in range(n_residual_blocks)]
-        tail = [UpsampleBlock(n_feats, scale), conv(n_feats, n_colors)]
+        body = [BasicBlock(n_feats) for _ in range(cfg["n_residual_blocks"])]
+        tail = [UpsampleBlock(n_feats, cfg["scale"]), conv(n_feats, n_colors)]
         self.head = nn.Sequential(*head)
         self.body = nn.Sequential(*body)
         self.tail = nn.Sequential(*tail)
