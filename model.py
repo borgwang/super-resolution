@@ -3,8 +3,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from config import cfg
-
 
 RGB_MEAN = np.array([0.4488, 0.4371, 0.4040])
 
@@ -16,7 +14,7 @@ def conv(in_channel, out_channel, kernel_size=3, bias=True):
 
 class ResBlock(nn.Module):
 
-    def __init__(self, n_feats, ):
+    def __init__(self, n_feats):
         super().__init__()
         self.conv1 = conv(n_feats, n_feats)
         self.conv2 = conv(n_feats, n_feats)
@@ -45,7 +43,7 @@ class UpsampleBlock(nn.Module):
 
 class EDSR(nn.Module):
 
-    def __init__(self):
+    def __init__(self, cfg):
         super().__init__()
         n_colors = 3  # RGB
         n_feats = cfg["n_feats"]
