@@ -6,15 +6,18 @@ class RandomCrop:
 
     def __init__(self, hr_crop_size, scale):
         self.hr_crop_size = hr_crop_size
+        self.lr_crop_size = self.hr_crop_size // scale
         self.scale = scale
 
     def __call__(self, sample):
         lr, hr = sample
         lr_h, lr_w, lr_c = lr.shape
 
-        self.lr_crop_size = self.hr_crop_size // self.scale
+        np.random.seed(np.random.randint(100000))
         lr_x = np.random.randint(0, lr_h - self.lr_crop_size + 1)
         lr_y = np.random.randint(0, lr_w - self.lr_crop_size + 1)
+        print(lr_x, (0, lr_h - self.lr_crop_size + 1))
+        print(lr_y, (0, lr_w - self.lr_crop_size + 1))
 
         hr_x, hr_y = lr_x * self.scale, lr_y * self.scale
 

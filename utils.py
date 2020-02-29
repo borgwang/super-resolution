@@ -4,10 +4,10 @@ import matplotlib.pyplot as plt
 from config import cfg
 
 
-def visualize_samples(samples, name, show=True, save=False):
+def visualize_samples(samples, name, save=False):
     cols = len(samples)
     rows = len(list(samples.values())[0])
-    plt.figure(figsize=(rows * 5, cols * 5))
+    fig = plt.figure(figsize=(rows * 5, cols * 5))
     for i, (k, v) in enumerate(samples.items()):
         for j in range(rows):
             sample = v[j].numpy().transpose((1, 2, 0))
@@ -22,5 +22,4 @@ def visualize_samples(samples, name, show=True, save=False):
         if not os.path.exists(diretory):
             os.makedirs(diretory)
         plt.savefig(os.path.join(diretory, name))
-    if show:
-        plt.show()
+    return fig

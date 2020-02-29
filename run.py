@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
+from torch.utils.tensorboard import SummaryWriter
 
 from config import cfg
 from dataset import DIV2K
@@ -31,6 +32,7 @@ def get_data_loader():
 
 
 def main(args):
+    writer = SummaryWriter("runs/super-resolution-experiment")
     train_loader = get_data_loader()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = EDSR().to(device)
@@ -47,26 +49,33 @@ def main(args):
         optimizer.load_state_dict(state["optim"])
 
     # train
+    global_batches = 0
     if args.train:
         for epoch in range(cfg["n_epoch"]):
             model.train()
+            running_loss = 0.0
             for i, batch in enumerate(train_loader):
                 lr, hr = batch[0].to(device), batch[1].to(device)
                 optimizer.zero_grad()
                 loss = criterion(model(lr), hr)
-                print(f"epoch-{epoch} batch-{i} loss: {loss.item()}")
+                running_loss += loss.item()
                 loss.backward()
                 optimizer.step()
+                global_batches += 1
 
             model.eval()
             with torch.no_grad():
-                n_samples = 3
+                n_samples = 2
                 lr, hr = batch[0][:n_samples], batch[1][:n_samples]
                 sr = model(lr.to(device)).cpu()
                 samples = {"low-resolution": lr, "high-resolution": hr, 
                            "EDSR": sr}
-                visualize_samples(samples, f"epoch-{epoch}", show=False, 
-                                  save=True)
+                fig = visualize_samples(samples, f"epoch-{epoch}", save=False)
+                writer.add_figure("sample-visualization", fig, 
+                                  global_step=global_batches)
+                writer.add_scalar("training-loss", 
+                                  running_loss / len(train_loader),
+                                  global_step=global_batches)
 
         state = {"net": model.state_dict(), "optim": optimizer.state_dict()}
         checkpoint_dir = cfg["checkpoint_dir"]

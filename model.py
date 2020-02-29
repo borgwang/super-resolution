@@ -10,13 +10,13 @@ RGB_MEAN = np.array([0.4488, 0.4371, 0.4040])
 
 
 def conv(in_channel, out_channel, kernel_size=3, bias=True):
-    return nn.Conv2d(in_channel, out_channel, kernel_size, 
+    return nn.Conv2d(in_channel, out_channel, kernel_size,
                      padding=(kernel_size // 2), bias=bias)
 
 
-class BasicBlock(nn.Module):
+class ResBlock(nn.Module):
 
-    def __init__(self, n_feats):
+    def __init__(self, n_feats, ):
         super().__init__()
         self.conv1 = conv(n_feats, n_feats)
         self.conv2 = conv(n_feats, n_feats)
@@ -52,8 +52,8 @@ class EDSR(nn.Module):
 
         layers = []
         head = [conv(n_colors, n_feats)]
-        body = [BasicBlock(n_feats) for _ in range(cfg["n_residual_blocks"])]
-        tail = [UpsampleBlock(n_feats, cfg["scale"]), conv(n_feats, n_colors)]
+        body = [ResBlock(n_feats) for _ in range(cfg["n_residual_blocks"])] + [conv(n_feats, n_feats)]
+        tail = [UpsampleBlock(n_feats, cfg["scale"])] + [conv(n_feats, n_colors)]
         self.head = nn.Sequential(*head)
         self.body = nn.Sequential(*body)
         self.tail = nn.Sequential(*tail)
@@ -64,10 +64,10 @@ class EDSR(nn.Module):
         x -= self.rgb_mean  # normalize
         x = self.head(x)
         out = self.body(x)
-        out += x
-        out = self.tail(out)
-        out += self.rgb_mean  # denormalize
-        return out
+        x = out + x
+        x = self.tail(x)
+        x += self.rgb_mean  # denormalize
+        return x
 
 
 if __name__ == "__main__":

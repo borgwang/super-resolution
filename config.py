@@ -10,9 +10,9 @@ cfg = {
     "scale": 4,
     "high_resolution_size": 256,
     # training
-    "n_epoch": 300,
-    "init_lr": 5e-5,
-    "batch_size": 16,
+    "n_epoch": 1000,
+    "init_lr": 1e-4,
+    "batch_size": 2,
     # misc
     "sample_dir": "./samples",
     "checkpoint_dir": "./checkpoints"
