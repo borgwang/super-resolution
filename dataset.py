@@ -32,7 +32,7 @@ class DIV2K(Dataset):
         return sample
 
     def _get_filenames(self, directory):
-        return np.array(sorted(glob.glob(os.path.join(directory, "*.png"))))[:2]
+        return np.array(sorted(glob.glob(os.path.join(directory, "*.png"))))[2:3]
 
     def read_images_as_array(self, paths):
         def read(path):

@@ -6,7 +6,4 @@
 
 #### TODOs
 
-- tensorboard monitor
-- decay learning rate
-- implement metric
 - easy-to-use API

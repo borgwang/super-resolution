@@ -1,0 +1,11 @@
+.idea
+*.swp
+.DS_Store
+__pycache__
+.pytest_cache
+.rsync_ignore
+
+data
+samples
+runs
+checkpoints

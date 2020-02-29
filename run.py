@@ -2,7 +2,6 @@ import argparse
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
 import torch
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
@@ -15,6 +14,7 @@ from transform import RandomCrop
 from transform import RandomFlip
 from transform import RandomRotate
 from transform import ToTensor
+from utils import compute_psnr
 from utils import visualize_samples
 
 
@@ -37,7 +37,8 @@ def main(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = EDSR().to(device)
     criterion = torch.nn.L1Loss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=cfg["init_lr"])
+    optimizer = torch.optim.Adam(model.parameters(), lr=cfg["init_lr"],
+                                 betas=(0.9, 0.999))
 
     if args.restore:
         checkpoint_dir = cfg["checkpoint_dir"]
@@ -62,19 +63,24 @@ def main(args):
                 loss.backward()
                 optimizer.step()
                 global_batches += 1
+                if global_batches % 500 == 0:
+                    for param_group in optimizer.param_groups:
+                        print(f"!!!!!!!!decay learning rate to {param_group['lr'] / 2}")
+                        param_group["lr"] /= 2
 
             model.eval()
             with torch.no_grad():
-                n_samples = 2
+                n_samples = 3
                 lr, hr = batch[0][:n_samples], batch[1][:n_samples]
                 sr = model(lr.to(device)).cpu()
-                samples = {"low-resolution": lr, "high-resolution": hr, 
-                           "EDSR": sr}
+                samples = {"lr": lr, "hr": hr, "sr": sr}
                 fig = visualize_samples(samples, f"epoch-{epoch}", save=False)
                 writer.add_figure("sample-visualization", fig, 
                                   global_step=global_batches)
                 writer.add_scalar("training-loss", 
                                   running_loss / len(train_loader),
+                                  global_step=global_batches)
+                writer.add_scalar("PSNR", compute_psnr(samples), 
                                   global_step=global_batches)
 
         state = {"net": model.state_dict(), "optim": optimizer.state_dict()}

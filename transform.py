@@ -13,12 +13,8 @@ class RandomCrop:
         lr, hr = sample
         lr_h, lr_w, lr_c = lr.shape
 
-        np.random.seed(np.random.randint(100000))
-        lr_x = np.random.randint(0, lr_h - self.lr_crop_size + 1)
-        lr_y = np.random.randint(0, lr_w - self.lr_crop_size + 1)
-        print(lr_x, (0, lr_h - self.lr_crop_size + 1))
-        print(lr_y, (0, lr_w - self.lr_crop_size + 1))
-
+        lr_x = int(torch.randint(0, lr_h - self.lr_crop_size + 1, (1,)))
+        lr_y = int(torch.randint(0, lr_w - self.lr_crop_size + 1, (1,)))
         hr_x, hr_y = lr_x * self.scale, lr_y * self.scale
 
         lr_cropped = lr[lr_x:lr_x + self.lr_crop_size, 
@@ -35,10 +31,10 @@ class RandomFlip:
         
     def __call__(self, sample):
         lr, hr = sample
-        if np.random.uniform() < self.vp:
+        if float(torch.rand(1)) < self.vp:
             lr = np.flip(lr, axis=0)
             hr = np.flip(hr, axis=0)
-        if np.random.uniform() < self.hp:
+        if float(torch.rand(1)) < self.hp:
             lr = np.flip(lr, axis=1)
             hr = np.flip(hr, axis=1)
         return lr, hr
@@ -48,7 +44,7 @@ class RandomRotate:
 
     def __call__(self, sample):
         lr, hr = sample
-        k = np.random.randint(4)
+        k = int(torch.randint(0, 4, (1,)))
         lr, hr = np.rot90(lr, k), np.rot90(hr, k)
         return lr, hr
 
