@@ -49,7 +49,9 @@ def main(args):
             for i, batch in enumerate(train_loader):
                 lr, hr = batch[0].to(device), batch[1].to(device)
                 optimizer.zero_grad()
-                loss = criterion(model(lr), hr)
+                sr = model(lr)
+                loss = model.loss(sr, hr)
+                # loss = criterion(model(lr), hr)
                 running_loss += loss.item()
                 loss.backward()
                 optimizer.step()

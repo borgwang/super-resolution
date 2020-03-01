@@ -56,6 +56,7 @@ class EDSR(nn.Module):
         super().__init__()
         n_colors = 3  # RGB
         n_feats = cfg["n_feats"]
+        self.criterion = torch.nn.L1Loss()
 
         layers = []
         head = [conv(n_colors, n_feats)]
@@ -74,11 +75,19 @@ class EDSR(nn.Module):
 
     def forward(self, x):
         x -= self.rgb_mean  # normalize
+        x = self.head(x)
         out = self.body(x)
         x = out + x
         x = self.tail(x)
         x += self.rgb_mean  # denormalize
         return x
+
+    def loss(self, sr, hr):
+        l1_loss = self.criterion(sr, hr)
+        blur_loss = torch.abs((hr - hr.mean(axis=(1, 2, 3)).reshape(-1, 1, 1, 1) ** 2).mean() - (sr - sr.mean(axis=(1, 2, 3)).reshape(-1, 1, 1, 1) ** 2).mean())
+        print(l1_loss)
+        print(blur_loss)
+        return l1_loss + 5 * blur_loss
 
 
 if __name__ == "__main__":
