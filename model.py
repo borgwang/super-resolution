@@ -17,8 +17,8 @@ class ResBlock(nn.Module):
 
     def __init__(self, n_feats, rescale=1.0):
         super().__init__()
-        self.conv1 = conv(n_feats, n_feats, groups=n_feats // 8)
-        self.conv2 = conv(n_feats, n_feats, groups=n_feats // 8)
+        self.conv1 = conv(n_feats, n_feats)
+        self.conv2 = conv(n_feats, n_feats)
         self.rescale = torch.tensor(rescale, requires_grad=False)
 
     def forward(self, x):
@@ -84,10 +84,8 @@ class EDSR(nn.Module):
 
     def loss(self, sr, hr):
         l1_loss = self.criterion(sr, hr)
-        blur_loss = torch.abs((hr - hr.mean(axis=(1, 2, 3)).reshape(-1, 1, 1, 1) ** 2).mean() - (sr - sr.mean(axis=(1, 2, 3)).reshape(-1, 1, 1, 1) ** 2).mean())
-        print(l1_loss)
-        print(blur_loss)
-        return l1_loss + 5 * blur_loss
+        loss = l1_loss
+        return loss
 
 
 if __name__ == "__main__":
