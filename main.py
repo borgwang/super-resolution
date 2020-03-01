@@ -32,13 +32,13 @@ def get_data_loader(cfg, data_dir):
 
 def main(args):
     cfg = cfg_dict[args.cfg_name]
-    writer = SummaryWriter("runs/super-resolution-experiment")
+    writer = SummaryWriter(os.path.join("runs", args.cfg_name))
     train_loader = get_data_loader(cfg, cfg["train_dir"])
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = EDSR(cfg).to(device)
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg["init_lr"],
-                                 betas=(0.9, 0.999))
+                                 betas=(0.9, 0.999), eps=1e-8)
 
     # train
     global_batches = 0
@@ -85,13 +85,9 @@ def main(args):
     
     # eval
     if args.eval:
-        assert args.model_name and args.lr_img_path
+        assert args.model_path and args.lr_img_path
         print(f"evaluating {args.lr_img_path}")
-        checkpoint_dir = args.checkpoint_dir
-        if not os.path.exists(checkpoint_dir):
-            os.makedirs(checkpoint_dir)
-        path = os.path.join(checkpoint_dir, args.model_name)
-        state = torch.load(path)
+        state = torch.load(args.model_path)
         model.load_state_dict(state["net"])
         optimizer.load_state_dict(state["optim"])
 
@@ -116,8 +112,7 @@ if __name__ == "__main__":
                         default="scale4-feat64-block16")
 
     parser.add_argument("--eval", action="store_true")
-    parser.add_argument("--model_name", type=str, 
-                        default="scale4-feat64-block16")
+    parser.add_argument("--model_path", type=str, default=None)
     parser.add_argument("--lr_img_path", type=str, default=None)
     parser.add_argument("--hr_img_path", type=str, default=None)
 

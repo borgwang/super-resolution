@@ -14,15 +14,17 @@ def conv(in_channel, out_channel, kernel_size=3, bias=True):
 
 class ResBlock(nn.Module):
 
-    def __init__(self, n_feats):
+    def __init__(self, n_feats, rescale=1.0):
         super().__init__()
         self.conv1 = conv(n_feats, n_feats)
         self.conv2 = conv(n_feats, n_feats)
+        self.rescale = torch.tensor(rescale, requires_grad=False)
 
     def forward(self, x):
         out = self.conv1(x)
         out = F.relu(out)
         out = self.conv2(out)
+        out *= self.rescale
         out += x
         return out 
 
@@ -56,8 +58,12 @@ class EDSR(nn.Module):
 
         layers = []
         head = [conv(n_colors, n_feats)]
-        body = [ResBlock(n_feats) for _ in range(cfg["n_residual_blocks"])] + [conv(n_feats, n_feats)]
-        tail = [UpsampleBlock(n_feats, cfg["scale"])] + [conv(n_feats, n_colors)]
+        body = [ResBlock(n_feats, cfg["rescale"]) 
+                for _ in range(cfg["n_residual_blocks"])]
+        body += [conv(n_feats, n_feats)]
+        tail = [UpsampleBlock(n_feats, cfg["scale"])] 
+        tail += [conv(n_feats, n_colors)]
+
         self.head = nn.Sequential(*head)
         self.body = nn.Sequential(*body)
         self.tail = nn.Sequential(*tail)
