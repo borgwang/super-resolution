@@ -7,17 +7,18 @@ import torch.nn.functional as F
 RGB_MEAN = np.array([0.4488, 0.4371, 0.4040])
 
 
-def conv(in_channel, out_channel, kernel_size=3, bias=True):
+def conv(in_channel, out_channel, kernel_size=3, bias=True, groups=None):
+    groups = 1 if groups is None else groups
     return nn.Conv2d(in_channel, out_channel, kernel_size,
-                     padding=(kernel_size // 2), bias=bias)
+                     padding=(kernel_size // 2), bias=bias, groups=groups)
 
 
 class ResBlock(nn.Module):
 
     def __init__(self, n_feats, rescale=1.0):
         super().__init__()
-        self.conv1 = conv(n_feats, n_feats)
-        self.conv2 = conv(n_feats, n_feats)
+        self.conv1 = conv(n_feats, n_feats, groups=n_feats // 8)
+        self.conv2 = conv(n_feats, n_feats, groups=n_feats // 8)
         self.rescale = torch.tensor(rescale, requires_grad=False)
 
     def forward(self, x):
@@ -65,6 +66,7 @@ class EDSR(nn.Module):
         tail += [conv(n_feats, n_colors)]
 
         self.head = nn.Sequential(*head)
+
         self.body = nn.Sequential(*body)
         self.tail = nn.Sequential(*tail)
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -72,7 +74,6 @@ class EDSR(nn.Module):
 
     def forward(self, x):
         x -= self.rgb_mean  # normalize
-        x = self.head(x)
         out = self.body(x)
         x = out + x
         x = self.tail(x)

@@ -87,20 +87,21 @@ def main(args):
     if args.eval:
         assert args.model_path and args.lr_img_path
         print(f"evaluating {args.lr_img_path}")
-        state = torch.load(args.model_path)
+        state = torch.load(args.model_path, map_location=device)
         model.load_state_dict(state["net"])
         optimizer.load_state_dict(state["optim"])
 
         with torch.no_grad():
             lr = img2tensor(args.lr_img_path)
-            sr = model(lr.to(device)).cpu()
+            sr = model(lr.clone().to(device)).cpu()
             samples = {"lr": lr, "sr": sr}
             if args.hr_img_path:
                 samples["hr"] = img2tensor(args.hr_img_path)
                 print(f"PSNR: {compute_psnr(samples)}")
+            directory = os.path.dirname(args.lr_img_path)
             name = f"eval-{args.cfg_name}-{args.lr_img_path.split('/')[-1]}"
             visualize_samples(samples, name, save=True, 
-                              directory=args.sample_dir, size=6)
+                              directory=directory, size=6)
 
 
 if __name__ == "__main__":
