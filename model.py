@@ -32,9 +32,15 @@ class UpsampleBlock(nn.Module):
     def __init__(self, n_feats, scale):
         super().__init__()
         layers = []
-        for _ in range(int(np.log2(scale))):
-            layers.append(conv(n_feats, 4 * n_feats))
-            layers.append(nn.PixelShuffle(2))
+        if scale in (2, 4, 8):
+            for _ in range(int(np.log2(scale))):
+                layers.append(conv(n_feats, 4 * n_feats))
+                layers.append(nn.PixelShuffle(2))
+        elif scale == 3:
+            layers.append(conv(n_feats, 9 * n_feats))
+            layers.append(nn.PixelShuffle(3))
+        else:
+            raise ValueError(f"Invalid scale={scale}")
         self.layers = nn.Sequential(*layers)
 
     def forward(self, x):

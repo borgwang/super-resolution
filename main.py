@@ -22,8 +22,6 @@ from utils import visualize_samples
 def get_data_loader(cfg, data_dir):
     transform = transforms.Compose([
         RandomCrop(cfg["scale"] * 48, scale=cfg["scale"]), 
-        RandomFlip(vp=0, hp=0.5), 
-        RandomRotate(), 
         ToTensor()])
 
     train_set = DIV2K(data_dir, transform=transform)

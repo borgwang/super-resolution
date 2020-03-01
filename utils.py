@@ -8,7 +8,9 @@ from PIL import Image
 
 def read_images_as_array(paths):
     def read(path):
-        return np.array(Image.open(path)).astype("float")
+        img = Image.open(path)
+        img = img.convert("RGB") if img.mode == "RGBA" else img
+        return np.array(img).astype("float")
 
     return read(paths) if isinstance(paths, str) else \
             np.array([read(p) for p in paths])
