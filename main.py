@@ -19,22 +19,19 @@ from utils import img2tensor
 from utils import visualize_samples
 
 
-def get_data_loader(cfg, data_dir):
+def get_data_loader(cfg, data_dir, batch_size=None):
+    batch_size = cfg["batch_size"] if batch_size is None else batch_size
     transform = transforms.Compose([
         RandomCrop(cfg["hr_crop_size"], cfg["scale"]), 
         ToTensor()])
-
-    train_set = DIV2K(data_dir, transform=transform)
-    train_loader = DataLoader(train_set, batch_size=cfg["batch_size"], 
-                              shuffle=True, num_workers=8)
-    return train_loader
+    dataset = DIV2K(data_dir, transform=transform)
+    return DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=8)
 
 
 def main(args):
     cfg = cfg_dict[args.cfg_name]
     writer = SummaryWriter(os.path.join("runs", args.cfg_name))
     train_loader = get_data_loader(cfg, cfg["train_dir"])
-    # valid_loader = get_data_loader(cfg, cfg["valid_dir"])
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = EDSR(cfg).to(device)
@@ -65,10 +62,8 @@ def main(args):
             if epoch % args.log_every == 0:
                 model.eval()
                 with torch.no_grad():
-                    lr, hr = batch
-                    sr = sr.cpu()
-                    # sr = model(lr.to(device)).cpu()
-                    batch_samples = {"lr": lr, "hr": hr, "sr": sr}
+                    batch_samples = {"lr": batch[0], "hr": batch[1], 
+                                     "sr": sr.cpu()}
                     writer.add_scalar("training-loss", 
                                       running_loss / len(train_loader),
                                       global_step=global_batches)
@@ -81,7 +76,7 @@ def main(args):
 
             if epoch % args.save_every == 0:
                 state = {"net": model.state_dict(), 
-                        "optim": optimizer.state_dict()}
+                         "optim": optimizer.state_dict()}
                 checkpoint_dir = args.checkpoint_dir
                 if not os.path.exists(checkpoint_dir):
                     os.makedirs(checkpoint_dir)
@@ -124,7 +119,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--save_every", type=int, default=100, 
                         help="save model every n epochs")
-    parser.add_argument("--log_every", type=int, default=5, 
+    parser.add_argument("--log_every", type=int, default=50, 
                         help="log every n epochs")
 
     main(parser.parse_args())
