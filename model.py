@@ -84,8 +84,7 @@ class EDSR(nn.Module):
 
     def loss(self, sr, hr):
         l1_loss = self.criterion(sr, hr)
-        loss = l1_loss
-        return loss
+        return l1_loss
 
 
 if __name__ == "__main__":

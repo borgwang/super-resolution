@@ -21,7 +21,7 @@ from utils import visualize_samples
 
 def get_data_loader(cfg, data_dir):
     transform = transforms.Compose([
-        RandomCrop(cfg["scale"] * 48, scale=cfg["scale"]), 
+        RandomCrop(cfg["hr_crop_size"], cfg["scale"]), 
         ToTensor()])
 
     train_set = DIV2K(data_dir, transform=transform)
@@ -34,13 +34,14 @@ def main(args):
     cfg = cfg_dict[args.cfg_name]
     writer = SummaryWriter(os.path.join("runs", args.cfg_name))
     train_loader = get_data_loader(cfg, cfg["train_dir"])
+    # valid_loader = get_data_loader(cfg, cfg["valid_dir"])
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = EDSR(cfg).to(device)
     criterion = torch.nn.L1Loss()
     optimizer = torch.optim.Adam(model.parameters(), lr=cfg["init_lr"],
                                  betas=(0.9, 0.999), eps=1e-8)
 
-    # train
     global_batches = 0
     if args.train:
         for epoch in range(cfg["n_epoch"]):
@@ -58,24 +59,26 @@ def main(args):
                 global_batches += 1
                 if global_batches % cfg["lr_decay_every"] == 0:
                     for param_group in optimizer.param_groups:
-                        print(f"decay lr to {param_group['lr'] / 2}")
-                        param_group["lr"] /= 2
+                        print(f"decay lr to {param_group['lr'] / 10}")
+                        param_group["lr"] /= 10
 
-            if global_batches % args.log_every == 0:
+            if epoch % args.log_every == 0:
                 model.eval()
                 with torch.no_grad():
-                    n_samples = 3
-                    lr, hr = batch[0][:n_samples], batch[1][:n_samples]
-                    sr = model(lr.to(device)).cpu()
-                    samples = {"lr": lr, "hr": hr, "sr": sr}
-                    fig = visualize_samples(samples, f"epoch-{epoch}")
-                    writer.add_figure("sample-visualization", fig, 
-                                      global_step=global_batches)
+                    lr, hr = batch
+                    sr = sr.cpu()
+                    # sr = model(lr.to(device)).cpu()
+                    batch_samples = {"lr": lr, "hr": hr, "sr": sr}
                     writer.add_scalar("training-loss", 
                                       running_loss / len(train_loader),
                                       global_step=global_batches)
-                    writer.add_scalar("PSNR", compute_psnr(samples), 
+                    writer.add_scalar("PSNR", compute_psnr(batch_samples), 
                                       global_step=global_batches)
+                    samples = {k: v[:3] for k, v in batch_samples.items()}
+                    fig = visualize_samples(samples, f"epoch-{epoch}")
+                    writer.add_figure("sample-visualization", fig, 
+                                      global_step=global_batches)
+
             if epoch % args.save_every == 0:
                 state = {"net": model.state_dict(), 
                         "optim": optimizer.state_dict()}
@@ -121,7 +124,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--save_every", type=int, default=100, 
                         help="save model every n epochs")
-    parser.add_argument("--log_every", type=int, default=10, 
-                        help="log every n batches")
+    parser.add_argument("--log_every", type=int, default=5, 
+                        help="log every n epochs")
 
     main(parser.parse_args())
